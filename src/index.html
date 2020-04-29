@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Animation Tinkering Station</title>
+    <link rel="stylesheet" href="index.css">
+    <script defer src="./app.js"></script>
+  </head>
+  <body>
+    <div class="workspace">
+      <canvas width="800" height="600"></canvas>
+      <video autoplay></video>
+    </div>
+    <div class="row my-3">
+      <div class="col d-flex justify-content-center">
+        <div
+          id="add-frame"
+          class="btn btn-primary d-flex align-items-center justify-content-center"
+          data-toggle="tooltip" data-placement="bottom" title="Add current frame"
+        >
+          <i class="fa fa-camera" aria-hidden="true"></i>
+        </div>
+      </div>
+      <div class="col d-flex justify-content-center">
+        <div
+          id="remove-frame"
+          class="btn btn-danger d-flex align-items-center justify-content-center"
+          data-toggle="tooltip" data-placement="bottom" title="Remove last frame"
+        >
+          <i class="fas fa-eraser" aria-hidden="true"></i>
+        </div>
+      </div>
+      <div class="col d-flex justify-content-center">
+        <div
+          id="play-animation"
+          class="btn btn-success d-flex align-items-center justify-content-center"
+          data-toggle="tooltip" data-placement="bottom" title="Play animation"
+        >
+          <i id="play-icon" class="fa fa-play" aria-hidden="true"></i>
+        </div>
+      </div>
+      <div class="col d-flex justify-content-center">
+        <div
+          id="save-animation"
+          class="btn btn-warning d-flex align-items-center justify-content-center"
+          data-toggle="tooltip" data-placement="bottom" title="Save animation to disc"
+        >
+          <i class="fas fa-download" aria-hidden="true"></i>
+        </div>
+      </div>
+    </div>      
+  </body>
+</html>
