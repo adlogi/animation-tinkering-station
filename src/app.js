@@ -1,16 +1,17 @@
 const electron = require('electron');
-const dialog = electron.remote.dialog;
-const app = electron.remote.app;
 const fs = require('fs');
 const ffmpeg = require('fluent-ffmpeg');
 
-const frames = [];
-let isPlaying = false;
+const app = electron.remote.app;
+const dialog = electron.remote.dialog;
 
 const CANVAS_WIDTH = 800;
 const CANVAS_HEIGHT = 600;
-// The frame rate for the animation, on screen and for the saved MP4 file.
 const FRAME_RATE = 4;
+const frames = [];
+let isPlaying = false;
+const logo = new Image();
+logo.src = './media/logo.png';
 
 const video = window.document.querySelector('video');
 const canvas = window.document.querySelector('canvas');
@@ -39,15 +40,6 @@ function initialize () {
   });
   document.querySelector('#remove-frame').addEventListener('click', removeFrame);
   document.querySelector('#save-animation').addEventListener('click', handleSaveVideo);
-
-  // ctx.scale(-1, 1);
-  // ctx.translate(-CANVAS_WIDTH, 0);
-
-  // fs.readdir('./ffmpeg/mac/ffmpeg', (err, files) => {
-  //   files.forEach(file => {
-  //     console.log(file);
-  //   });
-  // });
 
   ffmpeg.setFfmpegPath('./ffmpeg/mac/ffmpeg');
 }
@@ -87,7 +79,7 @@ function addFrame() {
   ctx.drawImage(video, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
   ctx.restore();
   frames.push(canvas.toDataURL());
-  
+  console.log(frames[frames.length - 1])
 }
 
 function removeFrame() {
@@ -103,7 +95,9 @@ function playAnimation() {
       canvas.style.opacity = 1;
       const drawing = new Image();
       drawing.src = arr[index];
+      // drawing.src = addLogo(arr[index]);
       drawing.onload = function() {
+        // context.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
         context.drawImage(drawing, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
         setTimeout(showNextFrame, 1000 / FRAME_RATE, context, arr, index + 1);
       };
@@ -131,22 +125,34 @@ function handleSaveVideo() {
     })
 }
 
+function addLogo(frame) {
+  const tempCanvas = document.createElement('canvas');
+  tempCanvas.width = CANVAS_WIDTH;
+  tempCanvas.height = CANVAS_HEIGHT;
+  const tempCtx = tempCanvas.getContext('2d');
+  const drawing = new Image();
+  drawing.src = frame;
+  drawing.onload = function() {
+    tempCtx.drawImage(drawing, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+  };
+  tempCtx.drawImage(logo, 0, 0, 107, 95);
+  return tempCanvas.toDataURL();
+}
+
 function saveVideo(output) {
   if (output) {
-    console.log(output)
-
-    const re = /^(.+\/)(.+)\.(.+)$/
-    const [, directory, fileName, extension] = output.split(re)
     // "^(.+\/)" matches directory path.
     // "(.+)" matches file name without extension.
     // "(.+)$" matches extension.
-    console.log(directory, fileName, extension)
-    
+    const re = /^(.+\/)(.+)\.(.+)$/;
+    const [, directory, fileName, extension] = output.split(re);
     const tempDir = `${directory}tmp-${('000000' + Math.floor(Math.random() * 1000000)).slice(-6)}/`;
+    // Create a temp directory to store the images to be processed to create the animation video
     fs.mkdirSync(tempDir);
 
     for (let i = 0; i < frames.length; i++) {
       const frameBase64Data = frames[i].replace(/^data:image\/(png|jpg|jpeg);base64,/, '');
+      console.log(frameBase64Data);
       const tempPath = tempDir + fileName + '-' + ('0' + i).slice(-2) + '.png';
       fs.writeFile(tempPath, frameBase64Data, 'base64', (err) => {
         if (err) {
@@ -156,8 +162,6 @@ function saveVideo(output) {
     }
 
     const input = tempDir + fileName + '-%02d.png';
-    // const output = directory + fileName + '.mp4';
-    // ffmpeg -y -framerate " + FRAME_RATE + " -i " + dirName + "frame-%03d.png -c:v libx264 -r 30 -pix_fmt yuv420p " + dirName + "animation.mp4"
     ffmpeg(input)
       .inputOptions([`-r ${FRAME_RATE}`])
       .outputOptions(['-y', `-r ${30}`, '-pix_fmt yuv420p'])
@@ -167,6 +171,9 @@ function saveVideo(output) {
       })
       .on('end', () => {
         console.log('Processing finished !');
+        const saveNotification = new Notification('Success', {
+          body: `Your animation has been saved as ${fileName}.${extension}!`
+        })
         fs.readdirSync(tempDir).forEach((file) => {
           fs.unlinkSync(tempDir + file);
         });
